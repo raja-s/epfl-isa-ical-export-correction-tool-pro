@@ -1,6 +1,12 @@
 'use strict';
 
 /*
+    Imports
+*/
+
+const fs = require('fs');
+
+/*
     Constants
 */
 
@@ -49,38 +55,21 @@ LANGUAGE_MAPPINGS[LANGUAGES.ENGLISH][CATEGORIES.EXERCISE] = 'Exercise';
 LANGUAGE_MAPPINGS[LANGUAGES.ENGLISH][CATEGORIES.PROJECT]  = 'Project';
 LANGUAGE_MAPPINGS[LANGUAGES.ENGLISH][CATEGORIES.LAB]      = 'Lab';
 
-// Traversal states
-const STATES = {
-    
-    // Seeking the 'BEGIN' tag of the next event (initial state)
-    SEEKING_NEXT_EVENT     : 0,
-    
-    // Event found, seeking the event's 'CATEGORIES' tag
-    // whose value is one of the known categories
-    SEEKING_EVENT_CATEGORY : 1,
-    
-    // Event category identified, seeking the event's 'SUMMARY'
-    // tag in order to insert the category string in its value
-    SEEKING_EVENT_SUMMARY  : 2
-    
-};
-
 // Error exit codes
 const ERRORS = {
     INCORRECT_NUMBER_OF_ARGUMENTS : 1,
     UNRECOGNIZED_LANGUAGE         : 2,
-    READ_FILE                     : 3,
-    WRITE_FILE                    : 4
+    READ_FILE                     : 3
 };
 
 // CLI usage text
 const USAGE =
-`Usage: node please-correct.js filename [language]
+`Usage: node please-correct.js input_file [language]
 
 Parameters:
-	filename - The name of the iCal file to be corrected.
-	language - Optional language to be used for the corrected iCal file.
-	           Possible values are "fr" for French (default) and "en" for English.
+	input_file - The name of the iCal file to be corrected.
+	language   - Optional language to be used for the corrected iCal file.
+	             Possible values are "fr" for French (default) and "en" for English.
 
 Public repository: https://github.com/raja-s/epfl-isa-ical-export-correction-tool-pro`;
 
@@ -90,6 +79,15 @@ Public repository: https://github.com/raja-s/epfl-isa-ical-export-correction-too
 
 // CLI arguments
 let filename, language;
+
+// File contents split by line
+let lines;
+
+// Traversal state
+let index = 0;
+
+let eventCategory = null;
+let summaryIndex  = -1;
 
 /*
     Functions
@@ -124,3 +122,62 @@ language = process.argv[3] || DEFAULT_LANGUAGE;
 if (!Object.values(LANGUAGES).includes(language)) {
     error(`Unrecognized language '${language}'`, ERRORS.UNRECOGNIZED_LANGUAGE);
 }
+
+try {
+    lines = fs.readFileSync(filename, { encoding : 'utf8' }).split('\n');
+} catch (readError) {
+    error(`Unable to read file '${filename}'`, ERRORS.READ_FILE);
+}
+
+// Loop through the lines of the input file
+while (index < lines.length) {
+    
+    let line = lines[index];
+    
+    // If it is not the beginning of an event, continue
+    if (line !== MATCHES.BEGIN_EVENT) {
+        index++;
+        continue;
+    }
+    
+    // Loop through the lines of the event
+    while ((line !== MATCHES.END_EVENT) && (index < lines.length)) {
+        
+        // If it is a 'CATEGORIES' line...
+        if (line.startsWith(MATCHES.CATEGORIES)) {
+            
+            let category = line.split(MATCHES.CATEGORIES)[1];
+            
+            // ...and the category is one of the known categories,
+            // then save the category for later
+            if (Object.values(CATEGORIES).includes(category)) {
+                eventCategory = category;
+            }
+            
+        }
+        
+        // If it is a 'SUMMARY' line, then save the line index for later
+        else if (line.startsWith(MATCHES.SUMMARY)) {
+            summaryIndex = index;
+        }
+        
+        index++;
+        line = lines[index];
+        
+    }
+    
+    // If we have a valid event category and summary line index,
+    // then insert the event category into the beginning of the summary
+    if ((eventCategory !== undefined) && (summaryIndex !== -1)) {
+        
+        let summary = lines[summaryIndex].split(MATCHES.SUMMARY)[1];
+        
+        lines[summaryIndex] =
+            `${MATCHES.SUMMARY}${LANGUAGE_MAPPINGS[language][eventCategory]} - ${summary}`;
+        
+    }
+    
+}
+
+// Print the corrected calendar to standard output
+process.stdout.write(lines.join('\n'));
