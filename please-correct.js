@@ -78,22 +78,6 @@ Parameters:
 Public repository: https://github.com/raja-s/epfl-isa-ical-export-correction-tool-pro`;
 
 /*
-    Variables
-*/
-
-// CLI arguments
-let filename, language;
-
-// File contents split by line
-let lines;
-
-// Traversal state
-let index = 0;
-
-let eventCategory = null;
-let summaryIndex  = -1;
-
-/*
     Functions
 */
 
@@ -117,8 +101,9 @@ if ((ARGUMENT_COUNT === 0) || (ARGUMENT_COUNT > 2)) {
     process.exit(ERRORS.INCORRECT_NUMBER_OF_ARGUMENTS);
 }
 
-filename = process.argv[2];
-language = process.argv[3] || DEFAULT_LANGUAGE;
+// CLI arguments
+let filename = process.argv[2];
+let language = process.argv[3] || DEFAULT_LANGUAGE;
 
 // If the given language is not present in the `LANGUAGES`
 // object, then print an error message and exit with the
@@ -127,11 +112,18 @@ if (!Object.values(LANGUAGES).includes(language)) {
     error(`Unrecognized language '${language}'`, ERRORS.UNRECOGNIZED_LANGUAGE);
 }
 
+// File contents split by line
+let lines;
+
+// Try to read the file with the given name
 try {
     lines = fs.readFileSync(filename, { encoding : 'utf8' }).split('\n');
 } catch (readError) {
     error(`Unable to read file '${filename}'`, ERRORS.READ_FILE);
 }
+
+// Traversal index
+let index = 0;
 
 // Loop through the lines of the input file
 while (index < lines.length) {
@@ -143,6 +135,9 @@ while (index < lines.length) {
         index++;
         continue;
     }
+    
+    let eventCategory = null;
+    let summaryIndex  = -1;
     
     // Loop through the lines of the event
     while ((line !== MATCHES.END_EVENT) && (index < lines.length)) {
@@ -172,7 +167,7 @@ while (index < lines.length) {
     
     // If we have a valid event category and summary line index,
     // then insert the event category into the beginning of the summary
-    if ((eventCategory !== undefined) && (summaryIndex !== -1)) {
+    if ((eventCategory !== null) && (summaryIndex !== -1)) {
         
         let summary = lines[summaryIndex].split(MATCHES.SUMMARY)[1];
         
