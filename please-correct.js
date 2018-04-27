@@ -14,29 +14,29 @@ const fs = require('fs');
 const ARGUMENT_COUNT = process.argv.length - 2;
 
 // Valid correction languages
-const LANGUAGES = {
+const LANGUAGES = Object.freeze({
     ENGLISH : 'en',
     FRENCH  : 'fr'
-};
+});
 
 // Default correction language
 const DEFAULT_LANGUAGE = LANGUAGES.FRENCH;
 
 // Event categories
-const CATEGORIES = {
+const CATEGORIES = Object.freeze({
     LECTURE  : 'Cours',
     EXERCISE : 'Exercices',
     PROJECT  : 'Projet',
     LAB      : 'Labo' // TODO: Check
-};
+});
 
 // Strings to look for during the traversal
-const MATCHES = {
+const MATCHES = Object.freeze({
     BEGIN_EVENT : 'BEGIN:VEVENT',
     END_EVENT   : 'END:VEVENT',
     SUMMARY     : 'SUMMARY:',
     CATEGORIES  : 'CATEGORIES:'
-};
+});
 
 // Event category-title mappings for each language
 const LANGUAGE_MAPPINGS = {};
@@ -55,12 +55,16 @@ LANGUAGE_MAPPINGS[LANGUAGES.ENGLISH][CATEGORIES.EXERCISE] = 'Exercise';
 LANGUAGE_MAPPINGS[LANGUAGES.ENGLISH][CATEGORIES.PROJECT]  = 'Project';
 LANGUAGE_MAPPINGS[LANGUAGES.ENGLISH][CATEGORIES.LAB]      = 'Lab';
 
+Object.freeze(LANGUAGE_MAPPINGS[LANGUAGES.FRENCH]);
+Object.freeze(LANGUAGE_MAPPINGS[LANGUAGES.ENGLISH]);
+Object.freeze(LANGUAGE_MAPPINGS);
+
 // Error exit codes
-const ERRORS = {
+const ERRORS = Object.freeze({
     INCORRECT_NUMBER_OF_ARGUMENTS : 1,
     UNRECOGNIZED_LANGUAGE         : 2,
     READ_FILE                     : 3
-};
+});
 
 // CLI usage text
 const USAGE =
