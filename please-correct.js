@@ -5,6 +5,7 @@
 */
 
 const fs = require('fs');
+const os = require('os');
 
 /*
     Constants
@@ -73,9 +74,12 @@ const USAGE =
 Parameters:
 	input_file - The name of the iCal file to be corrected.
 	language   - Optional language to be used for the corrected iCal file.
-	             Possible values are "fr" for French (default) and "en" for English.
+	             Possible values are 'fr' for French (default) and 'en' for English.
 
 Public repository: https://github.com/raja-s/epfl-isa-ical-export-correction-tool-pro`;
+
+// OS-specific new-line
+const NEW_LINE = os.EOL;
 
 /*
     Functions
@@ -117,7 +121,7 @@ let lines;
 
 // Try to read the file with the given name
 try {
-    lines = fs.readFileSync(filename, { encoding : 'utf8' }).split('\n');
+    lines = fs.readFileSync(filename, { encoding : 'utf8' }).split(NEW_LINE);
 } catch (readError) {
     error(`Unable to read file '${filename}'`, ERRORS.READ_FILE);
 }
@@ -179,4 +183,7 @@ while (index < lines.length) {
 }
 
 // Print the corrected calendar to standard output
-process.stdout.write(lines.join('\n'));
+process.stdout.write(lines.join(NEW_LINE));
+
+// Print success message
+process.stderr.write(`Correction complete! Good luck with your semester ;)${NEW_LINE}`);
